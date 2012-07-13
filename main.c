@@ -27,12 +27,12 @@ struct nod
     unsigned char* available;
 };
 
-void print_unit(uchar* u)
+void print_unit(snod* u)
 {
     int i = 0;
     for (i = 0; i < 9; i++)
     {
-        printf(" %d", u[i]);
+        printf(" %d", u[i].nr);
     }
     printf("\n");
 }
@@ -72,16 +72,16 @@ void show(snod* table)
     printf("|\n+------+------+------+\n");
 }
 
-uchar get_line_element(snod* table, int nr_line, int line_element)
+snod get_line_element(snod* table, int nr_line, int line_element)
 {
    int index =  9 * nr_line + line_element;
-   return table[index].nr;
+   return table[index];
 }
 
-uchar* get_line(struct nod* table, int line)
+snod* get_line(struct nod* table, int line)
 {
     int i = 0;
-    uchar* rez = (uchar*) malloc(sizeof(uchar) * 9);
+    snod* rez = (snod*) malloc(sizeof(snod) * 9);
     for (i = 0; i < 9; i++)
     {
         rez[i] = get_line_element(table, line, i);
@@ -89,17 +89,17 @@ uchar* get_line(struct nod* table, int line)
     return rez;
 }
 
-uchar get_column_element(snod* table, int nr_col, int col_element)
+snod get_column_element(snod* table, int nr_col, int col_element)
 {
     int index = 9 * col_element + nr_col;
-    return table[index].nr;
+    return table[index];
 }
 
 
-uchar* get_col(snod* table, int col)
+snod* get_col(snod* table, int col)
 {
     int i = 0;
-    uchar* rez = (uchar*) malloc(sizeof(uchar) * 9);
+    snod* rez = (snod*) malloc(sizeof(snod) * 9);
     for (i = 0; i < 9; i++)
     {
         rez[i] = get_column_element(table, col, i);
@@ -137,13 +137,13 @@ void print_cell(snod* table, int cel)
     {
         for (j = start_col; j < end_col; j++)
         {
-            printf(" %d", get_line_element(table, i, j));
+            printf(" %d", get_line_element(table, i, j).nr);
         }
         printf("\n");
     }
 }
 
-uchar* get_cell(snod* table, int cel)
+snod* get_cell(snod* table, int cel)
 {
     int i = 0;
     int j = 0;
@@ -151,7 +151,7 @@ uchar* get_cell(snod* table, int cel)
     int end_line = start_line + 3;
     int start_col = (cel % 3) * 3;
     int end_col = start_col + 3;
-    uchar* rez = (uchar*) malloc(sizeof(uchar) * 9);
+    snod* rez = (snod*) malloc(sizeof(snod) * 9);
     int q = 0;
 
     for (i = start_line; i < end_line; i++)
@@ -191,38 +191,90 @@ int get_cell_number(int pos_in_array)
 void build_table(uchar table[], snod* dest)
 {
     int i = 0;
+    int j = 0;
     for (i = 0; i < 81; i++)
     {
         dest[i].nr = table[i];
         dest[i].available = NULL;
+
+        if (dest[i].nr == 0)
+        {
+            dest[i].available = (uchar*) malloc(sizeof(uchar) * 9);
+            for (j = 0; j < 9; j++)
+            {
+                dest[i].available[j] = j + 1;
+            }
+        }
     }
 }
 
-void set_available_options(snod* table, int cel)
+
+void print_available_options(snod x)
+{
+    if (x.nr != 0)
+    {
+        printf("Node %d available None!\n", x.nr);
+    }
+    else
+    {
+        int i = 0;
+        for (i = 0; i < 9; i++)
+        {
+            printf(" %d", x.available[i]);
+        }
+        printf("\n");
+    }
+}
+
+void set_intern_available_cell_options(snod* cel, int exclude_value)
 {
     int i = 0;
     for (i = 0; i < 9; i++)
     {
-        uchar* cell;
-        cell = get_cell(i);
+        if (cel[i].nr == 0)
+        {
+            if (cel[i].available == NULL)
+            {
+                printf("nr == 0 iar available e null !!!!!!!!!1\n");
+            }
 
-        free(cell);
+            cel[i].available[exclude_value-1] = 0;
+        }
+    }
+}
+
+void set_available_options(snod* table, int cel_nr)
+{
+    int i = 0;
+    snod* cell = NULL;
+
+    cell = get_cell(table, cel_nr);
+    for (i = 0; i < 9; i++)
+    {
+        if (cell[i].nr != 0)
+        {
+            set_intern_available_cell_options(cell, cell[i].nr);
+        }
     }
 }
 
 int main()
 {
-    struct nod* table;
-    uchar* line = NULL;
-    uchar* col = NULL;
+    snod* table;
+    snod* cel;
     int i = 0;
+
     table = (snod*) malloc(sizeof(snod) * 81);
     build_table(original_table, table);
     show(table);
-    for (i = 0; i < 81; i++)
+
+    set_available_options(table, 0);
+    cel = get_cell(table, 0);
+    for (i = 0; i < 9; i++)
     {
-        get_cell_number(i);
+        print_available_options(cel[i]);
     }
+
     printf("\n\n");
     free(table);
     return 0;
