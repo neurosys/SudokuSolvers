@@ -2,6 +2,7 @@
 #include <malloc.h>
 
 #define uchar unsigned char
+#define snod struct nod
 
 unsigned char original_table[] = {
     3, 1, 2,      0, 9, 5,      0, 7, 6,
@@ -36,7 +37,7 @@ void print_unit(uchar* u)
     printf("\n");
 }
 
-void show(struct nod* table)
+void show(snod* table)
 {
     int i;
     for (i = 0; i < 81; i++)
@@ -71,7 +72,7 @@ void show(struct nod* table)
     printf("|\n+------+------+------+\n");
 }
 
-uchar get_line_element(struct nod* table, int nr_line, int line_element)
+uchar get_line_element(snod* table, int nr_line, int line_element)
 {
    int index =  9 * nr_line + line_element;
    return table[index].nr;
@@ -80,7 +81,7 @@ uchar get_line_element(struct nod* table, int nr_line, int line_element)
 uchar* get_line(struct nod* table, int line)
 {
     int i = 0;
-    unsigned char* rez = (unsigned char*) malloc(sizeof(unsigned char) * 9);
+    uchar* rez = (uchar*) malloc(sizeof(uchar) * 9);
     for (i = 0; i < 9; i++)
     {
         rez[i] = get_line_element(table, line, i);
@@ -88,14 +89,14 @@ uchar* get_line(struct nod* table, int line)
     return rez;
 }
 
-uchar get_column_element(struct nod* table, int nr_col, int col_element)
+uchar get_column_element(snod* table, int nr_col, int col_element)
 {
     int index = 9 * col_element + nr_col;
     return table[index].nr;
 }
 
 
-uchar* get_col(struct nod* table, int col)
+uchar* get_col(snod* table, int col)
 {
     int i = 0;
     uchar* rez = (uchar*) malloc(sizeof(uchar) * 9);
@@ -123,7 +124,7 @@ uchar* get_col(struct nod* table, int col)
  7 line 6 col 3
  8 line 6 col 6
 */
-void print_cell(struct nod* table, int cel)
+void print_cell(snod* table, int cel)
 {
     int i = 0;
     int j = 0;
@@ -142,7 +143,7 @@ void print_cell(struct nod* table, int cel)
     }
 }
 
-uchar* get_cell(struct nod* table, int cel)
+uchar* get_cell(snod* table, int cel)
 {
     int i = 0;
     int j = 0;
@@ -163,7 +164,31 @@ uchar* get_cell(struct nod* table, int cel)
     return rez;
 }
 
-void build_table(unsigned char table[], struct nod* dest)
+/*
+ [0 - 3) 1
+ [9 -12) 1
+ [18-21) 1
+
+ [3 - 6) 2
+ [12-15) 2
+ [21-24) 2
+
+ [6 - 9) 3
+ [15-18) 3
+ [24-27) 3
+
+ */
+
+int get_cell_number(int pos_in_array)
+{
+    int line = pos_in_array / 9; 
+    int col = pos_in_array % 9;
+    int cel = 3 * (line % 3) + (col / 3) ;
+    //printf("pos = %d, line = %d, col = %d, cel = %d\n", pos_in_array, line, col, cel);
+    return cel;
+}
+
+void build_table(uchar table[], snod* dest)
 {
     int i = 0;
     for (i = 0; i < 81; i++)
@@ -173,13 +198,13 @@ void build_table(unsigned char table[], struct nod* dest)
     }
 }
 
-void set_available_options(struct nod* table, int cel)
+void set_available_options(snod* table, int cel)
 {
     int i = 0;
     for (i = 0; i < 9; i++)
     {
         uchar* cell;
-        cell = get_cell(table, i);
+        cell = get_cell(i);
 
         free(cell);
     }
@@ -191,11 +216,13 @@ int main()
     uchar* line = NULL;
     uchar* col = NULL;
     int i = 0;
-    table = (struct nod*) malloc(sizeof(struct nod) * 81);
+    table = (snod*) malloc(sizeof(snod) * 81);
     build_table(original_table, table);
     show(table);
-    col = get_cell(table, 1);
-    print_unit(col);
+    for (i = 0; i < 81; i++)
+    {
+        get_cell_number(i);
+    }
     printf("\n\n");
     free(table);
     return 0;
