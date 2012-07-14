@@ -24,6 +24,7 @@ unsigned char original_table[] = {
 struct nod
 {
     unsigned char nr;
+    //int nr_available_options;
     unsigned char* available;
 };
 
@@ -199,6 +200,7 @@ void build_table(uchar table[], snod* dest)
         if (dest[i].nr == 0)
         {
             dest[i].available = (uchar*) malloc(sizeof(uchar) * 9);
+            //dest[i].nr_available_options = 9;
             for (j = 0; j < 9; j++)
             {
                 dest[i].available[j] = j + 1;
@@ -215,6 +217,7 @@ void print_available_options(snod x, int nr)
         int i = 0;
         int col = nr % 9;
         int line = nr / 9;
+        //printf("line %d col %d nr %d cel %d nr_avail %d >", line, col, nr, get_cell_number(nr), x.nr_available_options);
         printf("line %d col %d nr %d cel %d >", line, col, nr, get_cell_number(nr));
         for (i = 0; i < 9; i++)
         {
@@ -227,33 +230,39 @@ void print_available_options(snod x, int nr)
     }
 }
 
-void set_unit_available_options(snod** unit, int exclude_value)
+int set_unit_available_options(snod** unit, int exclude_value)
 {
     int i = 0;
+    int made_changes = 0;
     for (i = 0; i < 9; i++)
     {
         if (unit[i]->nr == 0)
         {
             if (unit[i]->available == NULL)
             {
-                printf("nr == 0 iar available e null !!!!!!!!!1\n");
+                printf("nr == 0 and available == NULL!!! BUG!!!\n");
             }
 
             unit[i]->available[exclude_value-1] = 0;
+            //unit[i]->nr_available_options--;
+            made_changes = 1;
         }
     }
+    return made_changes;
 }
 
-void set_available_options(snod** unit)
+int set_available_options(snod** unit)
 {
     int i = 0;
+    int changes = 0;
     for ( i = 0; i < 9; i++ )
     {
         if (unit[i]->nr != 0)
         {
-            set_unit_available_options(unit, unit[i]->nr);
+            changes |= set_unit_available_options(unit, unit[i]->nr);
         }
     }
+    return changes;
 }
 
 int analize_position(snod* table)
@@ -262,28 +271,79 @@ int analize_position(snod* table)
     snod** line;
     snod** col;
     int i = 0;
+    int changes = 0;
 
     for (i = 0; i < 9; i++)
     {
         cel = get_cell(table, i);
-        set_available_options(cel);
+        changes |= set_available_options(cel);
         free(cel);
     }
 
     for (i = 0; i < 9; i++)
     {
         line = get_line(table, i);
-        set_available_options(line);
+        changes |= set_available_options(line);
         free(line);
     }
 
     for (i = 0; i < 9; i++)
     {
         col = get_col(table, i);
-        set_available_options(col);
+        changes |= set_available_options(col);
         free(col);
     }
-    return -1;
+    return changes;
+}
+
+void store_new_values(snod* table)
+{
+    int i = 0;
+    int j = 0;
+    for (i = 0; i < 81; i++)
+    {
+        int non_zero_pos = -1;
+        int unique = 1;
+        if (table[i].nr == 0)
+        {
+            /* find if there is only one available option */
+            for (j = 0; j < 9 && unique; j++)
+            {
+                if (table[i].available[j] != 0)
+                {
+                    if (unique == 1 && non_zero_pos == -1)
+                    {
+                        non_zero_pos = j;
+                    }
+                    else
+                    {
+                        unique = 0;
+                    }
+                }
+            }
+
+            if (unique == 1)
+            {
+                table[i].nr = table[i].available[non_zero_pos];
+                //free(table[i].available);
+            }
+        }
+    }
+}
+
+int improve_solution(snod* table)
+{
+    int has_changed = 1;
+    while (has_changed == 1)
+    {
+        has_changed = analize_position(table);
+        if (has_changed != 0)
+        {
+            printf("Guess has been improved\n");
+        }
+        store_new_values(table);
+    }
+    return 0;
 }
 
 int main()
@@ -295,12 +355,13 @@ int main()
     build_table(original_table, table);
     show(table);
 
-    analize_position(table);
-
+    improve_solution(table);
     for (i = 0; i < 81; i++)
     {
         print_available_options(table[i], i);
     }
+
+    show(table);
 
     printf("\n\n");
     free(table);
