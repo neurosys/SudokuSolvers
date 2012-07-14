@@ -72,16 +72,16 @@ void show(snod* table)
     printf("|\n+------+------+------+\n");
 }
 
-snod get_line_element(snod* table, int nr_line, int line_element)
+snod* get_line_element(snod* table, int nr_line, int line_element)
 {
    int index =  9 * nr_line + line_element;
-   return table[index];
+   return &table[index];
 }
 
-snod* get_line(struct nod* table, int line)
+snod** get_line(struct nod* table, int line)
 {
     int i = 0;
-    snod* rez = (snod*) malloc(sizeof(snod) * 9);
+    snod** rez = (snod**) malloc(sizeof(snod*) * 9);
     for (i = 0; i < 9; i++)
     {
         rez[i] = get_line_element(table, line, i);
@@ -89,17 +89,17 @@ snod* get_line(struct nod* table, int line)
     return rez;
 }
 
-snod get_column_element(snod* table, int nr_col, int col_element)
+snod* get_column_element(snod* table, int nr_col, int col_element)
 {
     int index = 9 * col_element + nr_col;
-    return table[index];
+    return &table[index];
 }
 
 
-snod* get_col(snod* table, int col)
+snod** get_col(snod* table, int col)
 {
     int i = 0;
-    snod* rez = (snod*) malloc(sizeof(snod) * 9);
+    snod** rez = (snod**) malloc(sizeof(snod*) * 9);
     for (i = 0; i < 9; i++)
     {
         rez[i] = get_column_element(table, col, i);
@@ -137,13 +137,13 @@ void print_cell(snod* table, int cel)
     {
         for (j = start_col; j < end_col; j++)
         {
-            printf(" %d", get_line_element(table, i, j).nr);
+            printf(" %d", get_line_element(table, i, j)->nr);
         }
         printf("\n");
     }
 }
 
-snod* get_cell(snod* table, int cel)
+snod** get_cell(snod* table, int cel)
 {
     int i = 0;
     int j = 0;
@@ -151,7 +151,7 @@ snod* get_cell(snod* table, int cel)
     int end_line = start_line + 3;
     int start_col = (cel % 3) * 3;
     int end_col = start_col + 3;
-    snod* rez = (snod*) malloc(sizeof(snod) * 9);
+    snod** rez = (snod**) malloc(sizeof(snod*) * 9);
     int q = 0;
 
     for (i = start_line; i < end_line; i++)
@@ -165,25 +165,24 @@ snod* get_cell(snod* table, int cel)
 }
 
 /*
- [0 - 3) 1
- [9 -12) 1
- [18-21) 1
+0:0[00] 0:1[01] 0:2[02]     0:3[03] 0:4[04] 0:5[05]     0:6[06] 0:7[07] 0:8[08]
+1:0[09] 1:1[10] 1:2[11]     1:3[12] 1:4[13] 1:5[14]     1:6[15] 1:7[16] 1:8[17] 
+2:0[18] 2:1[19] 2:2[20]     2:3[21] 2:4[22] 2:5[23]     2:6[24] 2:7[25] 2:8[26] 
 
- [3 - 6) 2
- [12-15) 2
- [21-24) 2
+3:0[27] 3:1[28] 3:2[29]     3:3[30] 3:4[31] 3:5[32]     3:6[33] 3:7[34] 3:8[35]
+4:0[36] 4:1[37] 4:2[38]     4:3[39] 4:4[40] 4:5[41]     4:6[42] 4:7[43] 4:8[44] 
+5:0[45] 5:1[46] 5:2[47]     5:3[48] 5:4[49] 5:5[50]     5:6[51] 5:7[52] 5:8[53] 
 
- [6 - 9) 3
- [15-18) 3
- [24-27) 3
-
- */
+6:0[54] 6:1[55] 6:2[56]     6:3[57] 6:4[58] 6:5[59]     6:6[60] 6:7[61] 6:8[62]
+7:0[63] 7:1[64] 7:2[65]     7:3[66] 7:4[67] 7:5[68]     7:6[69] 7:7[70] 7:8[71] 
+8:0[72] 8:1[73] 8:2[74]     8:3[75] 8:4[76] 8:5[77]     8:6[78] 8:7[79] 8:8[80] 
+*/
 
 int get_cell_number(int pos_in_array)
 {
     int line = pos_in_array / 9; 
     int col = pos_in_array % 9;
-    int cel = 3 * (line % 3) + (col / 3) ;
+    int cel = 3 * (line / 3) + col / 3;
     //printf("pos = %d, line = %d, col = %d, cel = %d\n", pos_in_array, line, col, cel);
     return cel;
 }
@@ -213,7 +212,7 @@ void print_available_options(snod x)
 {
     if (x.nr != 0)
     {
-        printf("Node %d available None!\n", x.nr);
+        printf("> Element set (%d) no available option!\n", x.nr);
     }
     else
     {
@@ -226,34 +225,38 @@ void print_available_options(snod x)
     }
 }
 
-void set_intern_available_cell_options(snod* cel, int exclude_value)
+void set_intern_available_cell_options(snod** cel, int exclude_value)
 {
     int i = 0;
     for (i = 0; i < 9; i++)
     {
-        if (cel[i].nr == 0)
+        if (cel[i]->nr == 0)
         {
-            if (cel[i].available == NULL)
+            if (cel[i]->available == NULL)
             {
                 printf("nr == 0 iar available e null !!!!!!!!!1\n");
             }
 
-            cel[i].available[exclude_value-1] = 0;
+            cel[i]->available[exclude_value-1] = 0;
         }
     }
 }
 
+/* Leaves only the available options for a cell */
 void set_available_options(snod* table, int cel_nr)
 {
     int i = 0;
-    snod* cell = NULL;
+    snod** cell = NULL;
 
     cell = get_cell(table, cel_nr);
     for (i = 0; i < 9; i++)
     {
-        if (cell[i].nr != 0)
+        if (cell[i]->nr != 0)
         {
-            set_intern_available_cell_options(cell, cell[i].nr);
+            //printf("Found element %d\n", cell[i]->nr);
+            //print_available_options(*cell[i]);
+            set_intern_available_cell_options(cell, cell[i]->nr);
+            //print_available_options(*cell[i]);
         }
     }
 }
@@ -261,18 +264,22 @@ void set_available_options(snod* table, int cel_nr)
 int main()
 {
     snod* table;
-    snod* cel;
+    snod** cel;
     int i = 0;
 
     table = (snod*) malloc(sizeof(snod) * 81);
     build_table(original_table, table);
     show(table);
 
-    set_available_options(table, 0);
-    cel = get_cell(table, 0);
     for (i = 0; i < 9; i++)
     {
-        print_available_options(cel[i]);
+        set_available_options(table, i);
+    }
+    //cel = get_cell(table, 8);
+    for (i = 0; i < 81; i++)
+    {
+        printf("Element %d val = %d cell = %d\n", i, table[i].nr, get_cell_number(i));
+        //print_available_options(table[i]);
     }
 
     printf("\n\n");
