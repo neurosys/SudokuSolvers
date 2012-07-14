@@ -208,78 +208,98 @@ void build_table(uchar table[], snod* dest)
 }
 
 
-void print_available_options(snod x)
+void print_available_options(snod x, int nr)
 {
-    if (x.nr != 0)
-    {
-        printf("> Element set (%d) no available option!\n", x.nr);
-    }
-    else
+    if (x.nr == 0)
     {
         int i = 0;
+        int col = nr % 9;
+        int line = nr / 9;
+        printf("line %d col %d nr %d cel %d >", line, col, nr, get_cell_number(nr));
         for (i = 0; i < 9; i++)
         {
-            printf(" %d", x.available[i]);
+            if (x.available[i] != 0)
+            {
+                printf(" %d", x.available[i]);
+            }
         }
         printf("\n");
     }
 }
 
-void set_intern_available_cell_options(snod** cel, int exclude_value)
+void set_unit_available_options(snod** unit, int exclude_value)
 {
     int i = 0;
     for (i = 0; i < 9; i++)
     {
-        if (cel[i]->nr == 0)
+        if (unit[i]->nr == 0)
         {
-            if (cel[i]->available == NULL)
+            if (unit[i]->available == NULL)
             {
                 printf("nr == 0 iar available e null !!!!!!!!!1\n");
             }
 
-            cel[i]->available[exclude_value-1] = 0;
+            unit[i]->available[exclude_value-1] = 0;
         }
     }
 }
 
-/* Leaves only the available options for a cell */
-void set_available_options(snod* table, int cel_nr)
+void set_available_options(snod** unit)
 {
     int i = 0;
-    snod** cell = NULL;
-
-    cell = get_cell(table, cel_nr);
-    for (i = 0; i < 9; i++)
+    for ( i = 0; i < 9; i++ )
     {
-        if (cell[i]->nr != 0)
+        if (unit[i]->nr != 0)
         {
-            //printf("Found element %d\n", cell[i]->nr);
-            //print_available_options(*cell[i]);
-            set_intern_available_cell_options(cell, cell[i]->nr);
-            //print_available_options(*cell[i]);
+            set_unit_available_options(unit, unit[i]->nr);
         }
     }
+}
+
+int analize_position(snod* table)
+{
+    snod** cel;
+    snod** line;
+    snod** col;
+    int i = 0;
+
+    for (i = 0; i < 9; i++)
+    {
+        cel = get_cell(table, i);
+        set_available_options(cel);
+        free(cel);
+    }
+
+    for (i = 0; i < 9; i++)
+    {
+        line = get_line(table, i);
+        set_available_options(line);
+        free(line);
+    }
+
+    for (i = 0; i < 9; i++)
+    {
+        col = get_col(table, i);
+        set_available_options(col);
+        free(col);
+    }
+    return -1;
 }
 
 int main()
 {
     snod* table;
-    snod** cel;
     int i = 0;
 
     table = (snod*) malloc(sizeof(snod) * 81);
     build_table(original_table, table);
     show(table);
 
-    for (i = 0; i < 9; i++)
-    {
-        set_available_options(table, i);
-    }
-    //cel = get_cell(table, 8);
+    analize_position(table);
+
     for (i = 0; i < 81; i++)
     {
-        printf("Element %d val = %d cell = %d\n", i, table[i].nr, get_cell_number(i));
-        //print_available_options(table[i]);
+        print_available_options(table[i], i);
     }
 
     printf("\n\n");
