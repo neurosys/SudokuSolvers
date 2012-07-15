@@ -3,6 +3,7 @@
 
 #define uchar unsigned char
 #define snod struct nod
+#define ALL_SET 0x3fe
 
 unsigned char original_table[] = {
     3, 1, 2,      0, 9, 5,      0, 7, 6,
@@ -325,7 +326,7 @@ void store_new_values(snod* table)
             if (unique == 1)
             {
                 table[i].nr = table[i].available[non_zero_pos];
-                //free(table[i].available);
+                free(table[i].available);
             }
         }
     }
@@ -337,33 +338,174 @@ int improve_solution(snod* table)
     while (has_changed == 1)
     {
         has_changed = analize_position(table);
-        if (has_changed != 0)
+        if (has_changed)
         {
-            printf("Guess has been improved\n");
+            store_new_values(table);
         }
-        store_new_values(table);
+    }
+    return has_changed;
+}
+
+int set_bit(int* flag, int pos)
+{
+    int mask = 1;
+    mask <<= pos;
+    *flag |= mask;
+    return *flag;
+}
+
+int has_all_elements(snod** unit)
+{
+    int i = 0;
+    int bit_map = 0;
+    for (i = 0; i < 9; i++)
+    {
+       set_bit(&bit_map, unit[i]->nr);
+    }
+    if (bit_map & ALL_SET)
+    {
+        return 1;
     }
     return 0;
 }
 
-int main()
+int finished_solving(snod* table)
+{
+    int i = 0;
+    snod** cel;
+    snod** line;
+    snod** col;
+    int is_finished = 1;
+    for (i = 0; i < 9; i++)
+    {
+        cel = get_cell(table, i);
+        is_finished &= has_all_elements(cel);
+        free(cel);
+    }
+
+    for (i = 0; i < 9; i++)
+    {
+        line = get_line(table, i);
+        is_finished &= has_all_elements(line);
+        free(line);
+    }
+
+    for (i = 0; i < 9; i++)
+    {
+        col = get_col(table, i);
+        is_finished &= has_all_elements(col);
+        free(col);
+    }
+
+    if (is_finished)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+snod* copy_table(snod* table)
+{
+    int i = 0;
+    int j = 0;
+    snod* new_table = NULL;
+    new_table = (snod*) malloc(sizeof(snod) * 81);
+    for (i = 0; i < 81; i++)
+    {
+        new_table[i].nr = table[i].nr;
+        for (j = 0; j < 9; j++)
+        {
+            new_table[i].available[j] = table[i].available[j];
+        }
+    }
+    return new_table;
+}
+
+int get_position_with_less_options(snod* table)
+{ 
+    int i = 0;
+    int j = 0;
+    int best_position = -1;
+    int best_value = 0xFFFF;
+    for (i = 0; i < 81; i++)
+    {
+        if (table[i].nr == 0)
+        {
+            int bit_map = 0;
+            for (j = 0; j < 9; j++)
+            {
+                set_bit(&bit_map, table[i].available[j]);
+            }
+            if (bit_map < best_value)
+            {
+                best_value = bit_map;
+                best_position = i;
+            }
+        }
+    }
+    return best_position;
+}
+
+int get_first_option(snod x)
+{
+    int i = 0;
+    for (i = 0; i < 9; i++)
+    {
+        if (x.available[i] != 0)
+        {
+            return x.available[i];
+        }
+    }
+}
+
+int make_a_guess(snod* table)
+{
+    snod* new_table = NULL;
+    int position_for_guess = -1;
+    itn new_value = 0;
+
+    new_table = copy_table(table);
+    position_for_guess = get_position_with_less_options(new_table);
+    if (position_for_guess != -1)
+    {
+        new_value = get_first_option(new_table[position_for_guess]);
+    }
+    return -1;
+}
+
+int app()
 {
     snod* table;
     int i = 0;
+    int has_changed = 0;
 
     table = (snod*) malloc(sizeof(snod) * 81);
     build_table(original_table, table);
     show(table);
 
-    improve_solution(table);
+    has_changed = improve_solution(table);
+
+    if (finished_solving(table))
+    {
+        show(table);
+    }
+    else
+    {
+        // Start backtracking
+    }
+
     for (i = 0; i < 81; i++)
     {
         print_available_options(table[i], i);
     }
 
-    show(table);
 
     printf("\n\n");
     free(table);
+    return 0;
+}
+int main()
+{
+    app();
     return 0;
 }
