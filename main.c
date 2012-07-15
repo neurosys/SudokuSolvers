@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <malloc.h>
+#include <stdlib.h>
 
 #define uchar unsigned char
 #define snod struct nod
 #define ALL_SET 0x3fe
 
+//#define normal 1
+
+#ifdef normal
 unsigned char original_table[] = {
     3, 1, 2,      0, 9, 5,      0, 7, 6,
     5, 0, 9,      1, 0, 7,      0, 8, 2,
@@ -20,6 +24,23 @@ unsigned char original_table[] = {
     1, 7, 0,      3, 5, 8,      9, 0, 4,
     8, 0, 3,      4, 2, 0,      7, 0, 5
 };
+#else 
+unsigned char original_table[] = {
+    0, 0, 0,      0, 0, 0,      0, 0, 0,
+    0, 0, 0,      0, 0, 0,      0, 0, 0,
+    0, 0, 0,      0, 0, 0,      0, 0, 0,
+
+
+    0, 0, 0,      0, 0, 0,      0, 0, 0,
+    0, 0, 0,      0, 6, 0,      0, 0, 0,
+    0, 0, 0,      0, 0, 0,      0, 0, 0,
+
+
+    0, 0, 0,      0, 0, 0,      0, 0, 0,
+    0, 0, 0,      0, 0, 0,      0, 0, 0,
+    0, 0, 0,      0, 0, 0,      0, 0, 0
+};
+#endif
 
 
 struct nod
@@ -28,6 +49,15 @@ struct nod
     //int nr_available_options;
     unsigned char* available;
 };
+
+int is_still_valid(snod* table);
+snod* copy_table(snod* table);
+void print_unit(snod* u);
+void show(snod* table);
+int store_new_values(snod* table);
+void free_table(snod* table);
+int finished_solving(snod* table);
+int analize_position(snod* table);
 
 void print_unit(snod* u)
 {
@@ -201,13 +231,25 @@ void build_table(uchar table[], snod* dest)
         if (dest[i].nr == 0)
         {
             dest[i].available = (uchar*) malloc(sizeof(uchar) * 9);
-            //dest[i].nr_available_options = 9;
             for (j = 0; j < 9; j++)
             {
                 dest[i].available[j] = j + 1;
             }
         }
+    } 
+}
+
+void free_table(snod* table)
+{
+    int i = 0;
+    for (i = 0; i < 81; i++)
+    {
+        if (table[i].available != NULL)
+        {
+            free(table[i].available);
+        }
     }
+    free(table);
 }
 
 
@@ -219,7 +261,7 @@ void print_available_options(snod x, int nr)
         int col = nr % 9;
         int line = nr / 9;
         //printf("line %d col %d nr %d cel %d nr_avail %d >", line, col, nr, get_cell_number(nr), x.nr_available_options);
-        printf("line %d col %d nr %d cel %d >", line, col, nr, get_cell_number(nr));
+        printf("line %d col %d nr %2d cel %d >", line, col, nr, get_cell_number(nr));
         for (i = 0; i < 9; i++)
         {
             if (x.available[i] != 0)
@@ -231,6 +273,7 @@ void print_available_options(snod x, int nr)
     }
 }
 
+/* Returns 1 if it made changes int the available options */
 int set_unit_available_options(snod** unit, int exclude_value)
 {
     int i = 0;
@@ -244,14 +287,17 @@ int set_unit_available_options(snod** unit, int exclude_value)
                 printf("nr == 0 and available == NULL!!! BUG!!!\n");
             }
 
-            unit[i]->available[exclude_value-1] = 0;
-            //unit[i]->nr_available_options--;
-            made_changes = 1;
+            if (unit[i]->available[exclude_value-1] != 0)
+            {
+                unit[i]->available[exclude_value-1] = 0;
+                made_changes = 1;
+            }
         }
     }
     return made_changes;
 }
 
+/* Returns 1 if it made changes at the available options level */
 int set_available_options(snod** unit)
 {
     int i = 0;
@@ -266,6 +312,7 @@ int set_available_options(snod** unit)
     return changes;
 }
 
+/* Returns 1 if it made changes over the available options */
 int analize_position(snod* table)
 {
     snod** cel;
@@ -297,10 +344,12 @@ int analize_position(snod* table)
     return changes;
 }
 
-void store_new_values(snod* table)
+/* Returns 1 if it permanently stored a new value */
+int store_new_values(snod* table)
 {
     int i = 0;
     int j = 0;
+    int stored_new_values = 0;
     for (i = 0; i < 81; i++)
     {
         int non_zero_pos = -1;
@@ -326,10 +375,11 @@ void store_new_values(snod* table)
             if (unique == 1)
             {
                 table[i].nr = table[i].available[non_zero_pos];
-                free(table[i].available);
+                stored_new_values = 1;
             }
         }
     }
+    return stored_new_values;
 }
 
 int improve_solution(snod* table)
@@ -338,9 +388,23 @@ int improve_solution(snod* table)
     while (has_changed == 1)
     {
         has_changed = analize_position(table);
+        //printf("improve_solution() has_changed = %d\n", has_changed);
         if (has_changed)
         {
-            store_new_values(table);
+            snod* test_table = copy_table(table);
+            int tmp_rez = 0;
+            tmp_rez |= store_new_values(test_table);
+            tmp_rez |= is_still_valid(test_table);
+            free_table(test_table);
+            if (tmp_rez)
+            {
+                store_new_values(table);
+                has_changed = 1;
+            }
+            else
+            {
+                has_changed = 0;
+            }
         }
     }
     return has_changed;
@@ -354,16 +418,27 @@ int set_bit(int* flag, int pos)
     return *flag;
 }
 
+int check_bit(int flag, int pos)
+{
+    int mask = 1;
+    mask <<= pos;
+    flag &= mask;
+    return flag;
+}
+
 int has_all_elements(snod** unit)
 {
     int i = 0;
     int bit_map = 0;
     for (i = 0; i < 9; i++)
     {
-       set_bit(&bit_map, unit[i]->nr);
+        //printf("%2d", unit[i]->nr);
+        set_bit(&bit_map, unit[i]->nr);
     }
-    if (bit_map & ALL_SET)
+    //printf("\n");
+    if ((bit_map & ALL_SET) == ALL_SET)
     {
+        //printf("has_all_elements = 1, bit_map = %X[%d] ALL_SET = %X\n", bit_map, bit_map, ALL_SET);
         return 1;
     }
     return 0;
@@ -404,6 +479,61 @@ int finished_solving(snod* table)
     return 0;
 }
 
+int has_duplicate_elements(snod** unit)
+{
+    int i = 0;
+    int bit_map = 0;
+    for (i = 0; i < 9; i++)
+    {
+        if (unit[i]->nr != 0)
+        {
+            if (check_bit(bit_map, unit[i]->nr))
+            {
+                return 1;
+            }
+            else
+            {
+                set_bit(&bit_map, unit[i]->nr);
+            }
+        }
+    }
+    return 0;
+}
+
+int is_still_valid(snod* table)
+{
+    int i = 0;
+    snod** cel;
+    snod** line;
+    snod** col;
+    int is_broken = 0;
+    for (i = 0; i < 9; i++)
+    {
+        cel = get_cell(table, i);
+        is_broken |= has_duplicate_elements(cel);
+        free(cel);
+    }
+    //printf("1 is_broken > %d\n", is_broken);
+
+    for (i = 0; i < 9; i++)
+    {
+        line = get_line(table, i);
+        is_broken |= has_duplicate_elements(line);
+        free(line);
+    }
+    //printf("2 is_broken > %d\n", is_broken);
+
+    for (i = 0; i < 9; i++)
+    {
+        col = get_col(table, i);
+        is_broken |= has_duplicate_elements(col);
+        free(col);
+    }
+    //printf("2 is_broken > %d\n", is_broken);
+
+    return !is_broken;
+}
+
 snod* copy_table(snod* table)
 {
     int i = 0;
@@ -413,9 +543,14 @@ snod* copy_table(snod* table)
     for (i = 0; i < 81; i++)
     {
         new_table[i].nr = table[i].nr;
-        for (j = 0; j < 9; j++)
+        new_table[i].available = NULL;
+        if (new_table[i].nr == 0)
         {
-            new_table[i].available[j] = table[i].available[j];
+            new_table[i].available = (uchar*)malloc(sizeof(uchar) * 9);
+            for (j = 0; j < 9; j++)
+            {
+                new_table[i].available[j] = table[i].available[j];
+            }
         }
     }
     return new_table;
@@ -446,66 +581,73 @@ int get_position_with_less_options(snod* table)
     return best_position;
 }
 
-int get_first_option(snod x)
+int app(snod* table)
 {
     int i = 0;
-    for (i = 0; i < 9; i++)
+
+    improve_solution(table);
+
+    if (!is_still_valid(table))
     {
-        if (x.available[i] != 0)
+        return 0;
+    }
+
+    if (finished_solving(table))
+    {
+        show(table);
+        exit(0);
+        return 0;
+    }
+    else
+    {
+        int position_for_guess = -1;
+
+        position_for_guess = get_position_with_less_options(table);
+        if (position_for_guess != -1)
         {
-            return x.available[i];
+            for (i = 0; i < 9; i++)
+            {
+                if (table[position_for_guess].available[i] != 0)
+                {
+                    snod* new_table = NULL;
+                    new_table = copy_table(table);
+
+                    new_table[position_for_guess].nr = new_table[position_for_guess].available[i];
+                    //printf("Ok, this is a test for nr = %d is_still_valid = %d\n", 
+                            //new_table[position_for_guess].nr, is_still_valid(new_table));
+                    if (is_still_valid(new_table))
+                    {
+                        app(new_table);
+                    }
+                    free(new_table);
+                }
+            }
         }
     }
+
+    return 0;
 }
 
-int make_a_guess(snod* table)
-{
-    snod* new_table = NULL;
-    int position_for_guess = -1;
-    itn new_value = 0;
-
-    new_table = copy_table(table);
-    position_for_guess = get_position_with_less_options(new_table);
-    if (position_for_guess != -1)
-    {
-        new_value = get_first_option(new_table[position_for_guess]);
-    }
-    return -1;
-}
-
-int app()
+int main()
 {
     snod* table;
     int i = 0;
-    int has_changed = 0;
+    //int map =0;
 
     table = (snod*) malloc(sizeof(snod) * 81);
     build_table(original_table, table);
     show(table);
 
-    has_changed = improve_solution(table);
+    app(table);
 
-    if (finished_solving(table))
-    {
-        show(table);
-    }
-    else
-    {
-        // Start backtracking
-    }
-
+    show(table);
     for (i = 0; i < 81; i++)
     {
+        //set_bit(&map, i % 9);
+        //printf("Test i = %d map = %x check = %d\n", i % 9, map, check_bit(map, i % 9));
         print_available_options(table[i], i);
     }
-
-
+    free_table(table);
     printf("\n\n");
-    free(table);
-    return 0;
-}
-int main()
-{
-    app();
     return 0;
 }
