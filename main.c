@@ -613,8 +613,6 @@ int app(snod* table)
                     new_table = copy_table(table);
 
                     new_table[position_for_guess].nr = new_table[position_for_guess].available[i];
-                    //printf("Ok, this is a test for nr = %d is_still_valid = %d\n", 
-                            //new_table[position_for_guess].nr, is_still_valid(new_table));
                     if (is_still_valid(new_table))
                     {
                         app(new_table);
@@ -631,8 +629,6 @@ int app(snod* table)
 int main()
 {
     snod* table;
-    int i = 0;
-    //int map =0;
 
     table = (snod*) malloc(sizeof(snod) * 81);
     build_table(original_table, table);
@@ -641,12 +637,6 @@ int main()
     app(table);
 
     show(table);
-    for (i = 0; i < 81; i++)
-    {
-        //set_bit(&map, i % 9);
-        //printf("Test i = %d map = %x check = %d\n", i % 9, map, check_bit(map, i % 9));
-        print_available_options(table[i], i);
-    }
     free_table(table);
     printf("\n\n");
     return 0;
