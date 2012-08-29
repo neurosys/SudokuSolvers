@@ -7,6 +7,7 @@
 #define ALL_SET 0x3fe
 
 //#define normal 1
+#define insane 1
 
 #ifdef normal
 unsigned char original_table[] = {
@@ -25,6 +26,23 @@ unsigned char original_table[] = {
     8, 0, 3,      4, 2, 0,      7, 0, 5
 };
 #else 
+#ifdef insane
+unsigned char original_table[] = {
+    8, 0, 0,      0, 0, 0,      0, 0, 0,
+    0, 0, 3,      6, 0, 0,      0, 0, 0,
+    0, 7, 0,      0, 9, 0,      2, 0, 0,
+
+
+    0, 5, 0,      0, 0, 7,      0, 0, 0,
+    0, 0, 0,      0, 4, 5,      7, 0, 0,
+    0, 0, 0,      1, 0, 0,      0, 3, 0,
+
+
+    0, 0, 1,      0, 0, 0,      0, 6, 8,
+    0, 0, 8,      5, 0, 0,      0, 1, 0,
+    0, 9, 0,      0, 0, 0,      4, 0, 0
+};
+#else
 unsigned char original_table[] = {
     0, 0, 0,      0, 0, 0,      0, 0, 0,
     0, 0, 0,      0, 0, 0,      0, 0, 0,
@@ -40,7 +58,8 @@ unsigned char original_table[] = {
     0, 0, 0,      0, 0, 0,      0, 0, 0,
     0, 0, 0,      0, 0, 0,      0, 0, 0
 };
-#endif
+#endif // insane
+#endif // normal
 
 
 struct nod
@@ -584,6 +603,7 @@ int get_position_with_less_options(snod* table)
 int app(snod* table)
 {
     int i = 0;
+    static int nr_of_passes = 1;
 
     improve_solution(table);
 
@@ -594,12 +614,14 @@ int app(snod* table)
 
     if (finished_solving(table))
     {
+        printf("Finished in %d passes\n", nr_of_passes);
         show(table);
         exit(0);
         return 0;
     }
     else
     {
+        nr_of_passes++;
         int position_for_guess = -1;
 
         position_for_guess = get_position_with_less_options(table);
