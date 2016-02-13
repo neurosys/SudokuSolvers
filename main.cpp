@@ -9,6 +9,9 @@
 typedef unsigned char ubyte;
 typedef unsigned short int uword;
 
+// TODO test whether shifting the bit to create a mask is much slower
+// than having an static const array with the association between the
+// digits and the masks so that we won't compute them each time
 class Cell
 {
 private:
@@ -132,8 +135,6 @@ void Cell::UpdateVal()
 
 void Cell::SetNotAvail(ubyte n)
 {
-    printf("SetNotAvail(%d)\n", n);
-    Print();
     if (n > 9 || n == 0)
     {
         return;
@@ -152,7 +153,6 @@ void Cell::SetNotAvail(ubyte n)
     opts ^= bit;
 
     UpdateVal();
-    Print();
 }
 
 bool test_Cell()
@@ -186,7 +186,6 @@ bool test_Cell()
         opts_left = (opts_left == 1) ? 0 : opts_left;
 
         c2.SetNotAvail(i + 1);
-        //printf("opts_left = %d GetNumAvail() = %d\n", opts_left, c2.GetNumAvail());
         assert(c2.GetNumAvail() == opts_left);
     }
     assert(c2.GetVal() == 9);
