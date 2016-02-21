@@ -7,7 +7,8 @@
 #define mask unsigned short int
 #define ALL_SET 0x3fe
 
-#define normal 1
+//#define normal 1
+//#define insane 1
 
 #ifdef normal
 unsigned char original_table[] = {
@@ -196,11 +197,6 @@ snod** get_cell(snod* table, int cel)
     return rez;
 }
 
-void store_available_options(snod** table, int cel, snod** cel_values)
-{
-    // TODO
-}
-
 /*
 0:0[00] 0:1[01] 0:2[02]     0:3[03] 0:4[04] 0:5[05]     0:6[06] 0:7[07] 0:8[08]
 1:0[09] 1:1[10] 1:2[11]     1:3[12] 1:4[13] 1:5[14]     1:6[15] 1:7[16] 1:8[17] 
@@ -253,7 +249,7 @@ void print_available_options(snod x, int nr)
         int line = nr / 9;
         mask m = 1;
         //printf("line %d col %d nr %d cel %d nr_avail %d >", line, col, nr, get_cell_number(nr), x.nr_available_options);
-        printf("line %d col %d val = %d nr (%2d) cel %d avail = 0x%03X>", line, col, x.nr, nr, get_cell_number(nr), x.available);
+        //printf("line %d col %d val = %d nr (%2d) cel %d avail = 0x%03X>", line, col, x.nr, nr, get_cell_number(nr), x.available);
         for (i = 0; i < 10; i++)
         {
             if (x.available & m)
@@ -284,7 +280,7 @@ int set_unit_available_options(snod** unit, int exclude_value)
         //printf("addr unit[%d] = %d %d\n", i, unit[i], &unit[i]);
         if (unit[i]->nr == 0)
         {
-            printf("setter unit[%d] addr = %d (%d) (%d) (%d)\n", i, unit, *unit + i, unit[i], &unit[i]);
+            //printf("setter unit[%d] addr = %d (%d) (%d) (%d)\n", i, unit, *unit + i, unit[i], &unit[i]);
             if (unit[i]->available == 0)
             {
                 printf("nr == 0 and available == 0!!! BUG!!!\n");
@@ -293,8 +289,11 @@ int set_unit_available_options(snod** unit, int exclude_value)
             { 
                 mask m = 1;
                 m <<= exclude_value;
-                unit[i]->available ^= m;
-                made_changes = 1;
+                if (unit[i]->available & m)
+                {
+                    unit[i]->available ^= m;
+                    made_changes = 1;
+                }
             }
         }
     }
@@ -326,56 +325,76 @@ int analize_position(snod* table)
     int i = 0;
     int changes = 0;
 
+    /*
     for (i = 0; i < 81; i++)
     {
         if (table[i].nr == 0)
-            printf("table[%d] addr = %d ", i, table + i);
+            printf("table[%2d] addr = %d ", i, table + i);
         print_available_options(table[i], i);
     }
+    */
 
     for (i = 0; i < 9; i++)
     {
-        printf("Cell %d\n\n", i);
+        //printf("Cell %d\n\n", i);
         cel = get_cell(table, i);
         changes |= set_available_options(cel);
         free(cel);
     }
 
+    //printf("--------------------------------------------------------------------------------\n");
+    /*
+    for (i = 0; i < 81; i++)
+    {
+        if (table[i].nr == 0)
+            printf("table[%2d] addr = %d ", i, table + i);
+        print_available_options(table[i], i);
+    }
+    */
+
+    /*
     for (i = 0; i < 81; i++)
     {
         if (table[i].nr == 0)
             printf("table[%d] addr = %d ", i, table + i);
         print_available_options(table[i], i);
     }
+    */
 
     for (i = 0; i < 9; i++)
     {
-        printf("Line %d\n\n", i);
+        //printf("Line %d\n\n", i);
         line = get_line(table, i);
         changes |= set_available_options(line);
         free(line);
     }
 
+    /*
     for (i = 0; i < 81; i++)
     {
         if (table[i].nr == 0)
             printf("table[%d] addr = %d ", i, table + i);
         print_available_options(table[i], i);
     }
+    */
 
     for (i = 0; i < 9; i++)
     {
-        printf("Col %d\n\n", i);
+        //printf("Col %d\n\n", i);
         col = get_col(table, i);
         changes |= set_available_options(col);
         free(col);
     }
+    /*
+    printf("################################################################################\n");
     for (i = 0; i < 81; i++)
     {
         if (table[i].nr == 0)
-            printf("table[%d] addr = %d ", i, table + i);
+            printf("table[2%d] addr = %d ", i, table + i);
         print_available_options(table[i], i);
     }
+    printf("================================================================================\n");
+    */
     return changes;
 }
 
@@ -388,7 +407,7 @@ int has_unique_option(snod x)
     int unique = 0;
     int result = 0;
                   
-    for (i = 0; i < 9 && unique < 2; i++)
+    for (i = 0; i < 10 && unique < 2; i++)
     {
         if (x.available & m)
         {
@@ -432,7 +451,7 @@ int improve_solution(snod* table)
     while (has_changed == 1)
     {
         has_changed = analize_position(table);
-        printf("improve_solution() has_changed = %d\n", has_changed);
+        //printf("improve_solution() has_changed = %d\n", has_changed);
         if (has_changed)
         {
             snod* test_table = copy_table(table);
@@ -442,6 +461,7 @@ int improve_solution(snod* table)
             free_table(test_table);
             if (tmp_rez)
             {
+                //printf("Just stored shit\n");
                 store_new_values(table);
                 has_changed = 1;
             }
@@ -518,6 +538,7 @@ int finished_solving(snod* table)
 
     if (is_finished)
     {
+        //printf("wtf!?!?\n");
         return 1;
     }
     return 0;
@@ -599,6 +620,11 @@ int get_position_with_less_options(snod* table)
     {
         if (table[i].nr == 0)
         {
+            if (best_position == -1)
+            {
+                best_position = i;
+            }
+
             if (table[i].available < table[best_position].available)
             {
                 best_position = i;
@@ -616,40 +642,53 @@ int app(snod* table)
 
     if (!is_still_valid(table))
     {
+        //printf("Not valid\n");
         return 0;
     }
 
     if (finished_solving(table))
     {
+        //printf("Yeah, finished\n");
         show(table);
         exit(0);
         return 0;
     }
     else
     {
+        //printf("Start recursion\n");
         int position_for_guess = -1;
 
         position_for_guess = get_position_with_less_options(table);
+        //printf("position_for_guess = %d\n", position_for_guess);
         if (position_for_guess != -1 && table[position_for_guess].available != 0)
         {
+            //printf("1\n");
             mask m = 1;
-            for (i = 0; i < 9; i++)
+            for (i = 0; i < 10; i++)
             {
+                //printf("2\n");
                 if (table[position_for_guess].available & m)
                 {
+                    //printf("3\n");
                     snod* new_table = NULL;
                     new_table = copy_table(table);
 
                     new_table[position_for_guess].nr = i;
+                    //printf("Let's try number %d\n", i);
                     if (is_still_valid(new_table))
                     {
+                        //printf("4 Not valid\n");
                         app(new_table);
                     }
+                    //printf("5 Dump the idea, %d in position %d sucks\n", i, position_for_guess);
                     free(new_table);
                 }
+                //printf("6\n");
                 m <<= 1;
             }
+            //printf("7\n");
         }
+        //printf("8\n");
     }
 
     return 0;
