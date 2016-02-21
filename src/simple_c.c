@@ -694,6 +694,7 @@ int app(snod* table)
     return 0;
 }
 
+/*
 int main()
 {
     snod* table;
@@ -709,3 +710,4 @@ int main()
     printf("\n\n");
     return 0;
 }
+*/

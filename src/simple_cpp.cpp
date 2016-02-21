@@ -203,7 +203,7 @@ bool GridParser::GeneratePuzzleGrid(char* fname)
     return true;
 }
 
-bool ReadPuzzleFromCSV(char* fname)
+bool GridParser::ReadPuzzleFromCSV(char* fname)
 {
     if (fname == NULL || *fname == '\0')
     {
@@ -288,11 +288,12 @@ bool test_GridParser()
     GridParser gp;
     char template_file_name[] = "Sudoku_template.txt";
     assert(gp.GeneratePuzzleGrid(template_file_name));
-    assert(gp.ReadPuzzleFromCSV());
+    assert(gp.ReadPuzzleFromCSV((char*) "Sudoku_file.csv"));
     //gp.ReadPuzzle(template_file_name);
     return true;
 }
 
+/*
 int main(int argc, char* argv[])
 {
     for (int i = 0; i < argc; i++)
@@ -304,3 +305,4 @@ int main(int argc, char* argv[])
     test_GridParser();
     return 0;
 }
+*/
