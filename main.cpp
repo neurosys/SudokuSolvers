@@ -1,11 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-/*
- * TODO
- * - Binary flags to represent the 9 possible options, the 9 possible values stored, and option for uncompleted
- */
-
 typedef unsigned char ubyte;
 typedef unsigned short int uword;
 
@@ -155,6 +150,76 @@ void Cell::SetNotAvail(ubyte n)
     UpdateVal();
 }
 
+/*
+class Map
+{
+    Cell* cells[9];
+public:
+    Map(Cell* cells[9]);
+    Map(Map& grp);
+    ~Map();
+    Map& operator=(Map grp);
+};
+*/
+
+class GridParser
+{
+public:
+    GridParser();
+    
+    bool GeneratePuzzleGrid(char* file_name);
+    bool ReadPuzzleFromCSV(char* file_name);
+};
+
+GridParser::GridParser()
+{
+    // Do nothing for the moment
+}
+
+bool GridParser::GeneratePuzzleGrid(char* fname)
+{
+    if (fname == NULL || *fname == '\0')
+    {
+        return false;
+    }
+
+    FILE* f = fopen(fname, "w+t");
+    if (f == NULL)
+    {
+        return false;
+    }
+
+    const char top[] = "+---+---+---+---+---+---+---+---+---+\n";
+    const char row[] = "|   |   |   |   |   |   |   |   |   |\n";
+
+    for (int i = 0; i < 9; i++)
+    {
+        fprintf(f, top);
+        fprintf(f, row);
+    }
+    fprintf(f, top);
+    fflush(f);
+    fclose(f);
+    return true;
+}
+
+bool ReadPuzzleFromCSV(char* fname)
+{
+    if (fname == NULL || *fname == '\0')
+    {
+        return false;
+    }
+    FILE* f = fopen(fname, "r+t");
+
+    if (f == NULL)
+    {
+        return false;
+    }
+
+    //
+    return true;
+}
+
 bool test_Cell()
 {
     ubyte row = 1;
@@ -190,7 +255,42 @@ bool test_Cell()
     }
     assert(c2.GetVal() == 9);
 
-    return false;
+    return true;
+}
+
+/*
+bool test_Map()
+{
+    Cell* cells[9] = 
+    {
+        c1(1, 0, 1),
+        c2(2, 0, 2),
+        c3(3, 0, 3),
+        c4(4, 0, 4),
+        c5(5, 0, 5),
+        c6(6, 0, 6),
+        c7(7, 0, 7),
+        c8(8, 0, 8),
+        c9(9, 0, 0)
+    }
+    CellGroup cg = Column(cells);
+
+    assert(cg.UpdateCells());
+    assert(c9.GetVal() == 9);
+
+
+    return true;
+}
+*/
+
+bool test_GridParser()
+{
+    GridParser gp;
+    char template_file_name[] = "Sudoku_template.txt";
+    assert(gp.GeneratePuzzleGrid(template_file_name));
+    assert(gp.ReadPuzzleFromCSV());
+    //gp.ReadPuzzle(template_file_name);
+    return true;
 }
 
 int main(int argc, char* argv[])
@@ -200,5 +300,7 @@ int main(int argc, char* argv[])
         printf("argv[%d] = '%s'\n", i, argv[i]);
     }
     test_Cell();
+    //test_Line();
+    test_GridParser();
     return 0;
 }
